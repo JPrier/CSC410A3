@@ -20,13 +20,39 @@ def encoding(pt_from, pt_to, grid):
 
     clauses = []
 
-    for i in grid:
-        for j in grid[i]:
-            clauses += [Not [i,j]]
+    for i in range(len(grid)):
+        for j in range(len(grid[i])):
+            if grid[i][j] == 1:
+                clauses += [Not [i,j]]
+            else:
+                if [i,j] == pt_to:
+                    clauses += [[i,j]]
+                elif [i,j] == pt_from:
+                    clauses += [[i,j]]
+                else:
+                    clauses += [(Not([i,j])), Or(Xor(get_possible(i,j,grid)))]
 
     s = Solver()
 
+    for clause in clauses:
+        s.add(And(clause))
+
+    print(str(s.check()))
+
     return False
+
+
+def get_possible(i,j,grid):
+    possible = []
+    if grid[i+1][j] == 0:
+        possible += [i+1, j]
+    if grid[i-1][j] == 0:
+        possible += [i-1, j]
+    if grid[i][j+1] == 0:
+        possible += [i, j+1]
+    if grid[i][j-1] == 0:
+        possible += [i, j-1]
+    return possible
 
 # ================================================================================
 #  Do not modify below!
