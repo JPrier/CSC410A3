@@ -23,14 +23,15 @@ def encoding(pt_from, pt_to, grid):
     for i in range(len(grid)):
         for j in range(len(grid[i])):
             if grid[i][j] == 1:
-                clauses += [Not [i,j]]
+                clauses += [Not(Bool("b_%i_%i" % (i,j)))]
             else:
                 if [i,j] == pt_to:
-                    clauses += [[i,j]]
+                    clauses += [Bool("b_%i_%i" % (i,j))]
                 elif [i,j] == pt_from:
-                    clauses += [[i,j]]
+                    clauses += [Bool("b_%i_%i" % (i,j))]
                 else:
-                    clauses += [(Not([i,j])), Or(Xor(get_possible(i,j,grid)))]
+                    temp = [Not(Bool("b_%i_%i" % (i,j)))]  + get_possible(i,j,grid)
+                    #clauses += [Xor(temp)]
 
     s = Solver()
 
@@ -44,14 +45,14 @@ def encoding(pt_from, pt_to, grid):
 
 def get_possible(i,j,grid):
     possible = []
-    if grid[i+1][j] == 0:
-        possible += [i+1, j]
+    if i < len(grid) - 1 and grid[i+1][j] == 0:
+        possible.append(Bool("b_%i_%i" % (i+1, j)))
     if grid[i-1][j] == 0:
-        possible += [i-1, j]
-    if grid[i][j+1] == 0:
-        possible += [i, j+1]
+        possible.append(Bool("b_%i_%i" % (i-1, j)))
+    if j < len(grid[i]) - 1 and grid[i][j+1] == 0:
+        possible.append(Bool("b_%i_%i" % (i, j+1)))
     if grid[i][j-1] == 0:
-        possible += [i, j-1]
+        possible.append(Bool("b_%i_%i" % (i, j-1)))
     return possible
 
 # ================================================================================
