@@ -27,11 +27,20 @@ def encoding(pt_from, pt_to, grid):
             else:
                 if [i,j] == pt_to:
                     clauses += [Bool("b_%i_%i" % (i,j))]
+                    #add previous
                 elif [i,j] == pt_from:
                     clauses += [Bool("b_%i_%i" % (i,j))]
+                    #clauses += [Xor(get_possible(i,j,grid))] #next
                 else:
-                    temp = [Not(Bool("b_%i_%i" % (i,j)))]  + get_possible(i,j,grid)
-                    #clauses += [Xor(temp)]
+                    #either not this move or next (previous covered by always getting next)
+                    temp = get_possible(i,j,grid)
+                    temp_xor = [Not(Bool("b_%i_%i" % (i,j)))]
+
+                    if len(temp) > 0:
+                        temp_xor = [Xor(temp_xor[0], temp[0])]
+                    for i in range(len(temp) - 1):
+                        temp_xor = [Xor(temp[i+1], temp_xor[0])]
+                    clauses += temp_xor
 
     s = Solver()
 
@@ -39,6 +48,7 @@ def encoding(pt_from, pt_to, grid):
         s.add(And(clause))
 
     print(str(s.check()))
+    print(s.model())
 
     return False
 
@@ -47,11 +57,11 @@ def get_possible(i,j,grid):
     possible = []
     if i < len(grid) - 1 and grid[i+1][j] == 0:
         possible.append(Bool("b_%i_%i" % (i+1, j)))
-    if grid[i-1][j] == 0:
+    if i > 0 and grid[i-1][j] == 0:
         possible.append(Bool("b_%i_%i" % (i-1, j)))
     if j < len(grid[i]) - 1 and grid[i][j+1] == 0:
         possible.append(Bool("b_%i_%i" % (i, j+1)))
-    if grid[i][j-1] == 0:
+    if j > 0 and grid[i][j-1] == 0:
         possible.append(Bool("b_%i_%i" % (i, j-1)))
     return possible
 
