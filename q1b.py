@@ -8,7 +8,7 @@ def adjacent(r, n):
     Takes a room number j and returns a list of all adjacent rooms numbers.
     """
     adj = []
-    row = r / n
+    row = r // n
     col = r % n
     if row > 0: #Up
         adj.append(r - n)
@@ -25,7 +25,7 @@ def coordinates(r, n):
     """
     Takes a room number r and returns the room's coordinates
     """
-    row = r / n
+    row = r // n
     col = r % n
 
     return [col, row]
