@@ -27,6 +27,19 @@ def sequential_counter(literals, k):
     clauses = []
     # TODO: remove print statement below and implement the encoding.
     print("Sequential counter encoding not implemented.")
+    # Create (n-1*k) Rij variables
+    # Note: append empty arrays so the indexing is easier later on
+    R = [[]]
+    for i in range(1, n):
+        R.append([[]] + [Bool('R{}{}'.format(i, j)) for j in range(1, k + 1)])
+
+    # Add all the clauses
+    clauses.append(Or([literals[0], R[1][1]]))
+    clauses.append(And([Not(R[1][j]) for j in range(2, k + 1)]))
+    clauses.append(
+        And([And([Or([Not(literals[i - 1]), R[i][1]]), Or([Not(R[i - 1][1]), R[i][1]])]) for i in range(2, n)]))
+
+    print(clauses)
     return clauses
 
 # Is the performance difference between the two encodings significant?
