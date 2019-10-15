@@ -11,8 +11,10 @@ def naive(literals, k):
     The function returns the list of clauses that encode the at-most-k contraint.
     """
     clauses = []
-    # TODO: remove print statement below and implement the encoding.
-    print("Naive encoding not implemented.")
+    cs = list(itertools.combinations(literals, k + 1))
+    for c in cs:
+        xs = [Not(x) for x in c]
+        clauses += [Or(xs)]
     return clauses
 
 
