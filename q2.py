@@ -42,6 +42,8 @@ def sequential_counter(literals, k):
     clauses.append([Or([Not(literals[i]), Not(R[i - 1][k])]) for i in range(2, n)])
     clauses.append([Or([Not(literals[n - 1]), Not(R[n - 1][k])])])
 
+    print('--------')
+    print(clauses)
     return clauses
 
 # Is the performance difference between the two encodings significant?
