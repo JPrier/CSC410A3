@@ -25,8 +25,6 @@ def sequential_counter(literals, k):
     The function returns the list of clauses that encode the at-most-k constraint.
     """
     clauses = []
-    # TODO: remove print statement below and implement the encoding.
-    print("Sequential counter encoding not implemented.")
     # Create (n-1*k) Rij variables
     # Note: append empty arrays so the indexing is easier later on
     R = [[]]
@@ -35,11 +33,15 @@ def sequential_counter(literals, k):
 
     # Add all the clauses
     clauses.append(Or([literals[0], R[1][1]]))
-    clauses.append(And([Not(R[1][j]) for j in range(2, k + 1)]))
-    clauses.append(
-        And([And([Or([Not(literals[i - 1]), R[i][1]]), Or([Not(R[i - 1][1]), R[i][1]])]) for i in range(2, n)]))
+    clauses.append([Not(R[1][j]) for j in range(2, k + 1)])
+    clauses.append([And([Or([Not(literals[i - 1]), R[i][1]]), Or([Not(R[i - 1][1]), R[i][1]])]) for i in range(2, n)])
+    for i in range(2, n):
+        for j in range(2, k + 1):
+            clauses.append(
+                [And([Or([Not(literals[i]), Not(R[i - 1][j - 1]), R[i][j]]), Or([Not(R[i - 1][j], R[i][j])])])])
+    clauses.append([Or([Not(literals[i]), Not(R[i - 1][k])]) for i in range(2, n)])
+    clauses.append([Or([Not(literals[n - 1]), Not(R[n - 1][k])])])
 
-    print(clauses)
     return clauses
 
 # Is the performance difference between the two encodings significant?
