@@ -2,8 +2,36 @@
 # You cannot import any other modules. Put all your helper functions in this file
 from z3 import *
 import itertools
-import sys #python complained about sys not being defined
 
+def empty_cells(grid):
+    """
+    Takes a grid and returns the number of empty cells (cells that contain 0).
+    """
+    count = 0
+
+    for i in range(len(grid)):
+        for j in range(len(grid[i])):
+            if grid[i][j] == 0:
+                count += 1
+
+    return count
+
+def adjacent(i, j, n, m):
+    """
+    Takes coordinates i, j and returns a list of all adjacent cell coordinates.
+    """
+    adj = []
+
+    if i > 0: #Up
+        adj.append([i - 1, j])
+    if i < n - 1: #Down
+        adj.append([i + 1, j])
+    if j > 0: #Left
+        adj.append([i, j - 1])
+    if j < m - 1: #Right
+        adj.append([i, j + 1])
+
+    return adj
 
 def encoding(pt_from, pt_to, grid):
     """
@@ -18,52 +46,65 @@ def encoding(pt_from, pt_to, grid):
 
     # You can assume that well_formed_problem(pt_from, pt_to, grid) returns True (see below)
 
+    # TODO : implement this function!
+    if grid[pt_from[0]][pt_from[1]] or grid[pt_to[0]][pt_to[1]]:
+        return False
+
+    n = len(grid)
+    m = len(grid[0])
+    cells = empty_cells(grid)
+
+    vars = []
     clauses = []
 
-    for i in range(len(grid)):
-        for j in range(len(grid[i])):
-            if grid[i][j] == 1:
-                clauses += [Not(Bool("b_%i_%i" % (i,j)))]
-            else:
-                if [i,j] == pt_to:
-                    clauses += [Bool("b_%i_%i" % (i,j))]
-                    #add previous
-                elif [i,j] == pt_from:
-                    clauses += [Bool("b_%i_%i" % (i,j))]
-                    #clauses += [Xor(get_possible(i,j,grid))] #next
-                else:
-                    #either not this move or next (previous covered by always getting next)
-                    temp = get_possible(i,j,grid)
-                    temp_xor = [Not(Bool("b_%i_%i" % (i,j)))]
+    #Create the variables
+    for i in range(n):
+        vars.append([])
+        for j in range(m):
+            vars[i].append([])
+            if grid[i][j] == 0:
+                for k in range(cells):
+                    vars[i][j].append(Bool("x_%i_%i_%i" % (i,j,k)))
 
-                    if len(temp) > 0:
-                        temp_xor = [Xor(temp_xor[0], temp[0])]
-                    for i in range(len(temp) - 1):
-                        temp_xor = [Xor(temp[i+1], temp_xor[0])]
-                    clauses += temp_xor
+    #Path starts with pt_from and contains pt_to
+    clauses.append([vars[pt_from[0]][pt_from[1]][0]])
+    clauses.append(vars[pt_to[0]][pt_to[1]])
 
+    #Every room appears at most once
+    for i in range(n):
+        for j in range(m):
+            for pair in itertools.combinations(vars[i][j], 2):
+                clauses.append([Not(pair[0]), Not(pair[1])])
+
+    #Each step on the path has at most one room
+    for k in range(cells):
+        clause2 = []
+        for i in range(n):
+            for j in range(m):
+                if grid[i][j] == 0:
+                    clause2.append(vars[i][j][k])
+
+        for pair in itertools.combinations(clause2, 2):
+            clauses.append([Not(pair[0]), Not(pair[1])])
+
+    #Consecutive steps have adjacent rooms
+    for i in range(n):
+        for j in range(m):
+            if grid[i][j] == 0 and (i != pt_to[0] or j != pt_to[1]):
+                adj = adjacent(i, j, n, m)
+                for k in range(cells - 1):
+                    clause3 = [Not(vars[i][j][k])]
+                    for r, c in adj:
+                        if grid[r][c] == 0:
+                            clause3.append(vars[r][c][k + 1])
+                    clauses.append(clause3)
+
+    #Create solver, add clauses and check
     s = Solver()
-
     for clause in clauses:
-        s.add(And(clause))
-
-    print(str(s.check()))
-    print(s.model())
-
-    return False
-
-
-def get_possible(i,j,grid):
-    possible = []
-    if i < len(grid) - 1 and grid[i+1][j] == 0:
-        possible.append(Bool("b_%i_%i" % (i+1, j)))
-    if i > 0 and grid[i-1][j] == 0:
-        possible.append(Bool("b_%i_%i" % (i-1, j)))
-    if j < len(grid[i]) - 1 and grid[i][j+1] == 0:
-        possible.append(Bool("b_%i_%i" % (i, j+1)))
-    if j > 0 and grid[i][j-1] == 0:
-        possible.append(Bool("b_%i_%i" % (i, j-1)))
-    return possible
+        s.add(Or(clause))
+        
+    return str(s.check()) == 'sat'
 
 # ================================================================================
 #  Do not modify below!
